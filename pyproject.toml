@@ -1,0 +1,64 @@
+[project]
+name = "krauss"
+version = "0.1.0"
+description = "Reproduction and extension of Krauss et al. (2017) statistical arbitrage strategy"
+requires-python = ">=3.10"
+
+dependencies = [
+    # Core
+    "numpy",
+    "pandas",
+    "scipy",
+    "pyarrow",
+    "pyyaml",
+    "python-dotenv",
+    "tqdm",
+    "joblib",
+
+    # Data access
+    "wrds",
+    "sqlalchemy",
+    "psycopg2-binary",
+
+    # ML
+    "scikit-learn",
+    "xgboost",
+    "torch",
+
+    # Statistics
+    "statsmodels",
+
+    # Visualization & app
+    "matplotlib",
+    "plotly",
+    "streamlit",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "black",
+    "ipykernel",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
