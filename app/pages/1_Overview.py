@@ -24,7 +24,9 @@ from lib.data import (  # noqa: E402
     load_equity_curves, load_summary_table, load_pipeline_metadata,
     load_spy_benchmark,
 )
-from lib.charts import equity_curve_figure  # noqa: E402
+from lib.charts import (  # noqa: E402
+    EQUITY_MODE_OPTIONS, add_spy_overlay, equity_mode_spec,
+)
 
 if not data_build_is_complete():
     missing_build_warning()
@@ -67,16 +69,30 @@ itself informative about how often the two model heads disagree.
     )
 
 # ----- Full equity curve ----------------------------------------------------
-st.subheader("ENS1 equity curve, 1992-2025, with SPY for context")
+st.subheader("ENS1 equity curve, 1992-2025")
+mode_col, spy_col = st.columns([1, 1])
+with mode_col:
+    equity_mode = st.radio(
+        "Strategy curve mode",
+        options=list(EQUITY_MODE_OPTIONS),
+        horizontal=True,
+        key="overview_equity_mode",
+    )
+with spy_col:
+    show_spy = st.checkbox("Show SPY overlay", value=True, key="overview_show_spy")
+mode_spec = equity_mode_spec(equity_mode)
 
 # ENS1 P-only, both cost regimes, both eras — stitched across eras.
 ens1 = equity.query("model == 'ENS1' and scheme == 'P-only'").copy()
 ens1 = ens1.sort_values(["cost_regime", "date"])
-# Compound across era boundaries so the line is continuous through 2015.
+# Build both display modes across era boundaries so the line is continuous
+# through 2015.
 ens1["ret"] = ens1["ret"].fillna(0.0)
-ens1["stitched_cum"] = ens1.groupby("cost_regime")["ret"].transform(
+ens1["stitched_cum"] = ens1.groupby("cost_regime")["ret"].cumsum()
+ens1["stitched_compound"] = ens1.groupby("cost_regime")["ret"].transform(
     lambda s: (1.0 + s).cumprod() - 1.0
 )
+y_col = "stitched_compound" if mode_spec["column"] == "cum_ret" else "stitched_cum"
 
 fig = go.Figure()
 
@@ -87,27 +103,25 @@ ens1_labels = {
 }
 for cr, grp in ens1.groupby("cost_regime"):
     fig.add_trace(go.Scatter(
-        x=grp["date"], y=grp["stitched_cum"],
+        x=grp["date"], y=grp[y_col],
         mode="lines",
         name=ens1_labels[cr],
         line=dict(color=ens1_colors[cr], width=2),
-        hovertemplate="%{x|%Y-%m-%d}<br>cum ret = %{y:.2f}<extra></extra>",
+        hovertemplate=(
+            "%{x|%Y-%m-%d}<br>"
+            + mode_spec["hover"]
+            + " = %{y:.2f}<extra></extra>"
+        ),
     ))
 
-# SPY overlay — cumulative total return, rebased to start at 0 from the first
-# date the strategy has data for.
-if spy is not None and not spy.empty:
-    start = ens1["date"].min()
-    spy_in = spy[spy["date"] >= start].copy()
-    spy_in["ret"] = spy_in["ret"].fillna(0.0)
-    spy_in["cum_ret"] = (1.0 + spy_in["ret"]).cumprod() - 1.0
-    fig.add_trace(go.Scatter(
-        x=spy_in["date"], y=spy_in["cum_ret"],
-        mode="lines",
-        name="SPY total return (long market exposure — for context only)",
-        line=dict(color="#999", width=1.5, dash="dot"),
-        hovertemplate="%{x|%Y-%m-%d}<br>SPY cum ret = %{y:.2f}<extra></extra>",
-    ))
+if show_spy:
+    add_spy_overlay(
+        fig,
+        spy,
+        start=ens1["date"].min(),
+        end=ens1["date"].max(),
+        name="SPY total return (compounded, context only)",
+    )
 
 # Mark the extension-era boundary.
 fig.add_shape(
@@ -124,20 +138,26 @@ fig.add_annotation(
 fig.update_layout(
     height=500,
     xaxis_title=None,
-    yaxis_title="Cumulative return",
+    yaxis_title=mode_spec["axis"],
     legend=dict(orientation="h", y=-0.2),
     margin=dict(l=50, r=20, t=30, b=60),
     hovermode="x unified",
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
+spy_note = (
+    " **SPY is plotted as context, not as a direct benchmark**: this strategy "
+    "is dollar-neutral, so the honest comparator is cash plus alpha, not a "
+    "100 %-long index."
+    if show_spy else
+    " Turn on the SPY overlay for long-only market context."
+)
 st.caption(
     "ENS1 is the simple mean of RF, XGB and DNN direction predictions. "
     "Before costs it looks like a straight line up through the CRSP era. "
     "After 5 bps/half-turn, post-2008 returns flatten markedly — the gap is "
-    "the cost bill the original paper did not pay. **SPY is plotted as "
-    "context, not as a direct benchmark**: this strategy is dollar-neutral, "
-    "so the honest comparator is cash plus alpha, not a 100 %-long index."
+    "the cost bill the original paper did not pay."
+    + spy_note
 )
 
 # ----- Top-3 findings callouts ---------------------------------------------
@@ -215,7 +235,7 @@ eras_df = pd.DataFrame([
     _era_summary("1992-2015 (CRSP)"),
     _era_summary("2015-2025 (extension)"),
 ])
-st.dataframe(eras_df, use_container_width=True, hide_index=True)
+st.dataframe(eras_df, width="stretch", hide_index=True)
 
 st.caption(
     "CRSP era reproduces the paper's universe. Extension era is an independent "

@@ -94,7 +94,7 @@ digraph pipeline {
 }
 """
 
-st.graphviz_chart(GRAPH, use_container_width=True)
+st.graphviz_chart(GRAPH, width="stretch")
 
 st.markdown("### Stage explanations")
 

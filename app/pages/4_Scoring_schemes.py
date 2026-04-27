@@ -152,7 +152,7 @@ fig.update_layout(
     yaxis_title="Û  (predicted excess return, ENS1)",
     margin=dict(l=50, r=20, t=30, b=50),
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 # 2x2 quadrant count table
 qtable = pd.DataFrame({
@@ -162,7 +162,7 @@ qtable = pd.DataFrame({
 col_a, col_b = st.columns([3, 2])
 with col_a:
     st.markdown(f"**{selected_ts.date()}** — {n_total} eligible stocks")
-    st.dataframe(qtable, use_container_width=True)
+    st.dataframe(qtable, width="stretch")
 with col_b:
     st.metric(
         "Disagreement rate",
@@ -225,7 +225,7 @@ fig2.update_layout(
     legend=dict(orientation="h", y=-0.18),
     margin=dict(l=50, r=20, t=20, b=40),
 )
-st.plotly_chart(fig2, use_container_width=True)
+st.plotly_chart(fig2, width="stretch")
 
 # Quick numerical comparison of the two eras
 crsp_avg = daily_rate.query("era == '1992-2015 (CRSP)'")["disagree_rate"].mean()
@@ -296,7 +296,7 @@ fig3.update_layout(
     legend=dict(orientation="h", y=-0.2),
     margin=dict(l=50, r=20, t=20, b=40),
 )
-st.plotly_chart(fig3, use_container_width=True)
+st.plotly_chart(fig3, width="stretch")
 
 col_a, col_b, col_c = st.columns(3)
 col_a.metric("Û std — CRSP era", f"{crsp_std:.5f}")

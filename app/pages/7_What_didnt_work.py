@@ -123,14 +123,14 @@ if regime_k is not None and not regime_k.empty:
         yaxis_title="Regime",
         margin=dict(l=80, r=20, t=30, b=40),
     )
-    st.plotly_chart(fig_k, use_container_width=True)
+    st.plotly_chart(fig_k, width="stretch")
 
     # Also show the raw-return grid alongside.
     with st.expander("Raw post-cost daily return (bps)"):
         bps_pivot = regime_k.pivot(index="regime", columns="k",
                                      values="daily_return_bps")
         bps_pivot = bps_pivot.loc[row_order]
-        st.dataframe(bps_pivot.round(2), use_container_width=True)
+        st.dataframe(bps_pivot.round(2), width="stretch")
 else:
     st.info("regime_k_sensitivity.parquet not present in app/data/.")
 
@@ -154,7 +154,7 @@ st.subheader("Rescue attempts on the high-vol regime")
 if regime_leg is not None and not regime_leg.empty:
     st.dataframe(
         regime_leg.drop(columns=["source"]),
-        use_container_width=True, hide_index=True,
+        width="stretch", hide_index=True,
         column_config={
             "sharpe": st.column_config.NumberColumn("Sharpe", format="%.3f"),
         },
@@ -190,7 +190,7 @@ xcheck = xcheck.rename(columns={
 })
 xcheck["Daily ret (%)"] = xcheck["Daily ret (%)"] * 100
 st.dataframe(
-    xcheck, use_container_width=True, hide_index=True,
+    xcheck, width="stretch", hide_index=True,
     column_config={
         "Sharpe (extension, post-cost)": st.column_config.NumberColumn(format="%.2f"),
         "Daily ret (%)": st.column_config.NumberColumn(format="%.4f"),

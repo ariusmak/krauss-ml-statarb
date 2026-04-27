@@ -154,7 +154,7 @@ def _hp_table(key: str) -> None:
     st.caption(f"Source: `{spec['source']}`")
     df = pd.DataFrame(spec["rows"], columns=["Hyperparameter", "Value"])
     df["Value"] = df["Value"].astype(str)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width="stretch", hide_index=True)
 
 
 def _oos_block(model: str, schemes_to_show: list[str] | None = None) -> None:
@@ -171,7 +171,7 @@ def _oos_block(model: str, schemes_to_show: list[str] | None = None) -> None:
              .sort_values(["era", "cost_regime", "scheme"])
              .reset_index(drop=True))
     st.dataframe(
-        view, use_container_width=True, hide_index=True,
+        view, width="stretch", hide_index=True,
         column_config={
             "daily_return": st.column_config.NumberColumn(format="%.4f"),
             "sharpe": st.column_config.NumberColumn(format="%.2f"),
@@ -214,7 +214,7 @@ def _example_top5(model: str, scheme: str = "P-only") -> None:
         f"Concrete example — top-5 longs on {d.date()} under {scheme} "
         "scoring (ENS1 demo scheme, period covering that date)."
     )
-    st.dataframe(top5, use_container_width=True, hide_index=True,
+    st.dataframe(top5, width="stretch", hide_index=True,
                  column_config={
                      "p_hat": st.column_config.NumberColumn(format="%.3f"),
                      "u_hat": st.column_config.NumberColumn(format="%.5f"),

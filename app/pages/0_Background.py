@@ -81,7 +81,7 @@ fig.update_layout(
     margin=dict(l=80, r=20, t=10, b=40),
     showlegend=False,
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 # --- 3. Sharpe ratio --------------------------------------------------------
 card(

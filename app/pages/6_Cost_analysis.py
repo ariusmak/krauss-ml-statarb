@@ -112,7 +112,7 @@ fig.update_layout(
     margin=dict(l=50, r=20, t=30, b=50),
     legend=dict(orientation="h", y=-0.17),
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 st.caption(
     "The dashed red line is the Sharpe frontier — the best Sharpe achievable "
@@ -164,7 +164,7 @@ st.dataframe(
         "Baseline daily ret %", "Band 10bps daily ret %", "Δ daily %",
         "Baseline Sharpe", "Band 10bps Sharpe", "Δ Sharpe",
     ]],
-    use_container_width=True, hide_index=True,
+    width="stretch", hide_index=True,
     column_config={
         "Baseline daily ret %": st.column_config.NumberColumn(format="%.4f"),
         "Band 10bps daily ret %": st.column_config.NumberColumn(format="%.4f"),
@@ -211,7 +211,7 @@ fig_bar.update_layout(
     xaxis_tickangle=-45,
     margin=dict(l=50, r=20, t=20, b=120),
 )
-st.plotly_chart(fig_bar, use_container_width=True)
+st.plotly_chart(fig_bar, width="stretch")
 
 st.caption(
     "Source: `notebooks/cost_band_test.ipynb` on the cost-modeling branch. "

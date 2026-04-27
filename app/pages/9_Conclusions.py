@@ -68,7 +68,7 @@ st.dataframe(
         "sharpe": "Post-cost Sharpe",
         "matched_days_return": "Matched-days ret",
     }),
-    use_container_width=True, hide_index=True,
+    width="stretch", hide_index=True,
     column_config={
         "Daily ret": st.column_config.NumberColumn(format="%.4f"),
         "Post-cost Sharpe": st.column_config.NumberColumn(format="%.2f"),
@@ -147,7 +147,7 @@ if not ens1_ext.empty:
             "daily_return": "Daily ret (extension)",
             "sharpe": "Post-cost Sharpe (extension)",
         }),
-        use_container_width=True, hide_index=True,
+        width="stretch", hide_index=True,
         column_config={
             "Daily ret (extension)": st.column_config.NumberColumn(format="%.4f"),
             "Post-cost Sharpe (extension)": st.column_config.NumberColumn(format="%.2f"),

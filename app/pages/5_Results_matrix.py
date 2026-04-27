@@ -19,15 +19,19 @@ st.set_page_config(page_title="Results matrix", page_icon=":bar_chart:",
 
 from lib.data import (  # noqa: E402
     data_build_is_complete, missing_build_warning,
-    load_equity_curves, load_summary_table,
+    load_equity_curves, load_spy_benchmark, load_summary_table,
 )
-from lib.charts import equity_curve_figure, MODEL_ORDER, SCHEME_ORDER  # noqa: E402
+from lib.charts import (  # noqa: E402
+    EQUITY_MODE_OPTIONS, add_spy_overlay, equity_curve_figure,
+    equity_mode_spec, MODEL_ORDER, SCHEME_ORDER,
+)
 
 if not data_build_is_complete():
     missing_build_warning()
 
 equity = load_equity_curves()
 summary = load_summary_table()
+spy = load_spy_benchmark()
 
 st.info(
     ":bulb: **New to this?** The [Background primer](Background) explains "
@@ -48,8 +52,7 @@ st.caption(
 with st.sidebar:
     st.header("Filters")
     eras = sorted(summary["era"].unique().tolist())
-    default_era = [e for e in eras if "CRSP" in e] or eras
-    era_sel = st.multiselect("Era", options=eras, default=default_era)
+    era_sel = st.multiselect("Era", options=eras, default=eras)
 
     model_opts = [m for m in MODEL_ORDER if m in summary["model"].unique()]
     model_sel = st.multiselect("Model", options=model_opts, default=model_opts)
@@ -84,7 +87,7 @@ display = filtered.rename(columns={
     "sharpe": "Sharpe",
     "trading_days": "Trading days",
     "avg_turnover": "Avg turnover",
-    "cum_return": "Cum. return",
+    "total_pnl": "Cumulative daily return",
     "trailing_1y_return": "Trailing 1y ann. ret",
 })
 
@@ -92,7 +95,8 @@ display = display[[
     "era", "model", "scheme", "cost_regime",
     "Full-sample daily ret", "Matched-days daily ret", "Matched days",
     "Ann. return", "Ann. vol", "Sharpe",
-    "Trading days", "Avg turnover", "Cum. return", "Trailing 1y ann. ret",
+    "Trading days", "Avg turnover", "Cumulative daily return",
+    "Trailing 1y ann. ret",
 ]].sort_values(["era", "cost_regime", "scheme", "model"]).reset_index(drop=True)
 
 # Reorder column values for readable axis sorts.
@@ -104,7 +108,7 @@ display["scheme"] = pd.Categorical(display["scheme"], categories=SCHEME_ORDER,
 st.subheader("Summary table")
 event = st.dataframe(
     display,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
     on_select="rerun",
     selection_mode="multi-row",
@@ -115,7 +119,7 @@ event = st.dataframe(
         "Ann. vol": st.column_config.NumberColumn(format="%.3f"),
         "Sharpe": st.column_config.NumberColumn(format="%.2f"),
         "Avg turnover": st.column_config.NumberColumn(format="%.3f"),
-        "Cum. return": st.column_config.NumberColumn(format="%.3f"),
+        "Cumulative daily return": st.column_config.NumberColumn(format="%.3f"),
         "Trailing 1y ann. ret": st.column_config.NumberColumn(format="%.3f"),
     },
 )
@@ -124,6 +128,17 @@ selected_indices = event.selection.rows if hasattr(event, "selection") else []
 
 # --- Overlay equity curves for selected rows -------------------------------
 st.subheader("Equity curves for selected rows")
+mode_col, spy_col = st.columns([1, 1])
+with mode_col:
+    equity_mode = st.radio(
+        "Strategy curve mode",
+        options=list(EQUITY_MODE_OPTIONS),
+        horizontal=True,
+        key="results_equity_mode",
+    )
+with spy_col:
+    show_spy = st.checkbox("Show SPY overlay", value=True, key="results_show_spy")
+mode_spec = equity_mode_spec(equity_mode)
 
 if not selected_indices:
     st.info("Click one or more rows above to overlay their equity curves here.")
@@ -142,12 +157,31 @@ else:
         )
     sub = equity[mask].copy()
     sub["label"] = (
-        sub["model"].astype(str) + " · " + sub["scheme"].astype(str)
-        + " · " + sub["cost_regime"] + " · " + sub["era"]
+        sub["model"].astype(str)
+        + " · "
+        + sub["scheme"].astype(str)
+        + " · "
+        + sub["cost_regime"].astype(str)
+        + " · "
+        + sub["era"].astype(str)
     )
-    fig = equity_curve_figure(sub, group_col="label", height=520)
+    fig = equity_curve_figure(
+        sub,
+        group_col="label",
+        height=520,
+        y_col=mode_spec["column"],
+        y_axis_title=mode_spec["axis"],
+    )
+    if show_spy:
+        add_spy_overlay(
+            fig,
+            spy,
+            start=sub["date"].min(),
+            end=sub["date"].max(),
+            name="SPY total return (compounded, context only)",
+        )
     fig.update_layout(legend=dict(orientation="h", y=-0.15))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 # --- Quick comparators -----------------------------------------------------
 with st.expander("Best Sharpe per era + cost regime"):
@@ -162,7 +196,7 @@ with st.expander("Best Sharpe per era + cost regime"):
             "era", "cost_regime", "model", "scheme", "sharpe",
             "ann_return", "avg_turnover",
         ]],
-        use_container_width=True, hide_index=True,
+        width="stretch", hide_index=True,
         column_config={
             "sharpe": st.column_config.NumberColumn(format="%.2f"),
             "ann_return": st.column_config.NumberColumn(format="%.3f"),
