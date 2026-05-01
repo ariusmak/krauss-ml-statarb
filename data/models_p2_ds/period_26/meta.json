@@ -1,0 +1,16 @@
+{
+  "period_id": 26,
+  "phase": 2,
+  "dataset": "datastream_usonly",
+  "train_start": "2015-10-16",
+  "train_end": "2018-10-08",
+  "usable_train_start": "2016-09-29",
+  "trade_start": "2018-10-09",
+  "trade_end": "2019-10-07",
+  "n_train_obs": 256213,
+  "n_trade_obs": 125430,
+  "n_train_stocks": 551,
+  "n_trade_stocks": 521,
+  "n_train_days": 510,
+  "n_trade_days": 250
+}
