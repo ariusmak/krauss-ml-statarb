@@ -5,6 +5,12 @@
 # Allow prediction files via LFS
 !data/processed/predictions_*.parquet
 
+# Small app-facing artifact consumed by Streamlit
+!app/data/model_returns.parquet
+!app/data/live_latest_positions.parquet
+app/data/model_returns_refresh.log
+app/data/.model_returns_refresh.lock
+
 # Python
 __pycache__/
 *.py[cod]

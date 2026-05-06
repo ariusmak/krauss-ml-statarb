@@ -1,0 +1,12 @@
+# Streamlit Cloud runtime dependencies for the research-demo app.
+# Only lists what the running app needs — backtests and data builds are
+# precomputed offline and shipped as parquet/json files under app/data/.
+#
+# Pinned to a floor for reproducibility; ceilings left open so Streamlit
+# Cloud can pick up minor updates.
+
+streamlit>=1.36
+plotly>=5.20
+pandas>=2.1
+pyarrow>=15
+numpy>=1.26

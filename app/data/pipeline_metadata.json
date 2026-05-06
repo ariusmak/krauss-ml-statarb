@@ -1,0 +1,137 @@
+{
+  "eras": {
+    "crsp": {
+      "start": "1992-12-17",
+      "end": "2015-10-15",
+      "universe": "S&P 500 constituents (CRSP, no lookahead)"
+    },
+    "extension": {
+      "start": "2015-10-16",
+      "end": "2025-09-24",
+      "universe": "S&P 500 constituents via Datastream (US only)"
+    }
+  },
+  "models": {
+    "RF": {
+      "type": "Random Forest classifier (scikit-learn)",
+      "source": "src/krauss/models/rf_phase1.py:29-49",
+      "hyperparameters": {
+        "n_estimators": 1000,
+        "max_depth": 20,
+        "max_features": "floor(sqrt(31)) = 5",
+        "bootstrap": true,
+        "max_samples": 0.632,
+        "criterion": "entropy",
+        "random_state": 1
+      },
+      "target": "y_binary"
+    },
+    "XGB": {
+      "type": "XGBoost classifier",
+      "source": "src/krauss/models/xgb_phase1.py:32-51",
+      "hyperparameters": {
+        "n_estimators": 100,
+        "max_depth": 3,
+        "learning_rate": 0.1,
+        "colsample_bynode": "15/31 = 0.484",
+        "min_child_weight": 10,
+        "reg_lambda": 0,
+        "reg_alpha": 0,
+        "gamma": 1e-05,
+        "max_bin": 20,
+        "objective": "binary:logistic",
+        "eval_metric": "logloss"
+      },
+      "target": "y_binary"
+    },
+    "DNN": {
+      "type": "Feed-forward NN with maxout activations (PyTorch)",
+      "source": "src/krauss/models/dnn_phase1.py:63-304",
+      "hyperparameters": {
+        "architecture": "31 -> Maxout(31) -> Maxout(10) -> Maxout(5) -> Linear(2)",
+        "maxout_channels": 2,
+        "dropout_input": 0.1,
+        "dropout_hidden": 0.5,
+        "optimizer": "Adadelta(lr=1.0, rho=0.99, eps=1e-8)",
+        "loss": "CrossEntropyLoss",
+        "epochs": 400,
+        "batch_size": 1024,
+        "l1_lambda": 1e-05,
+        "early_stop_window": 5,
+        "early_stop_patience": 5
+      },
+      "target": "y_binary"
+    },
+    "MT-DNN": {
+      "type": "Multi-task DNN with shared trunk + cls and reg heads",
+      "source": "src/krauss/models/dnn_multitask.py:55-275",
+      "hyperparameters": {
+        "trunk": "31 -> Maxout(31) -> Maxout(10) -> Maxout(5)",
+        "cls_head": "Linear(5, 1) + sigmoid",
+        "reg_head": "Linear(5, 1)",
+        "loss": "0.5 * BCE + 0.5 * Huber",
+        "other": "same schedule as Phase-1 DNN"
+      },
+      "target": "y_binary and u_excess",
+      "trained_on": "Datastream Phase 2 rolling windows, including the frozen period-33 live-tail model"
+    },
+    "RF cls+reg pair": {
+      "type": "RandomForestClassifier + RandomForestRegressor",
+      "source": "src/krauss/models/rf_extension.py:22-49",
+      "hyperparameters": {
+        "classifier": "identical to RF Phase 1",
+        "regressor": "same tree params, criterion='squared_error'"
+      },
+      "target": "y_binary (cls) and u_excess (reg)"
+    },
+    "XGB cls+reg pair": {
+      "type": "XGBClassifier + XGBRegressor",
+      "source": "src/krauss/models/xgb_extension.py:22-58",
+      "hyperparameters": {
+        "classifier": "identical to XGB Phase 1",
+        "regressor": "same params, objective='reg:pseudohubererror'"
+      },
+      "target": "y_binary (cls) and u_excess (reg)"
+    },
+    "ENS1": {
+      "type": "Equal-weight mean of DNN, XGB, RF predictions",
+      "source": "src/krauss/models/ensembles_phase1.py:14-24 (Phase 1); src/krauss/models/ensembles_phase2.py:16-32 (Phase 2)",
+      "formula": "(p_dnn + p_xgb + p_rf) / 3  \u2014 Phase-2 ENS1 also averages u_dnn/u_xgb/u_rf the same way"
+    },
+    "ENS2": {
+      "type": "Gini-weighted mean of DNN, XGB, RF (Phase 1 only)",
+      "source": "src/krauss/models/ensembles_phase1.py:37-70",
+      "formula": "weights proportional to training-period Gini = 2*AUC - 1; falls back to ENS1 if all Gini <= 0"
+    },
+    "ENS3": {
+      "type": "Rank-weighted mean of DNN, XGB, RF (Phase 1 only)",
+      "source": "src/krauss/models/ensembles_phase1.py:73-101",
+      "formula": "w_i = (1/R_i) / sum_j(1/R_j), R_i = Gini rank (1 best, 3 worst) \u2014 Aiolfi & Timmermann 2006"
+    }
+  },
+  "scoring_schemes": {
+    "P-only": "rank by P_hat (direction prediction only)",
+    "U-only": "rank by U_hat (excess-return magnitude only)",
+    "Z-comp": "rank by 0.5 * z(P_hat) + 0.5 * z(U_hat) per day",
+    "Product": "rank by (2*P_hat - 1) * U_hat (signed)",
+    "P-gate(0.03)": "longs: P>0.53, top k by U desc; shorts: P<0.47, bottom k by U asc",
+    "P-gate(0.05)": "longs: P>0.55, top k by U desc; shorts: P<0.45, bottom k by U asc"
+  },
+  "backtest": {
+    "k_long": 10,
+    "k_short": 10,
+    "rebalance": "daily, close-to-close",
+    "weighting": "equal weight per leg, dollar neutral",
+    "cost_bps_per_half_turn": 5.0,
+    "cost_regimes": {
+      "no_cost": "pre-cost gross returns",
+      "5bps_half_turn": "5 bps per half-turn (paper convention)"
+    }
+  },
+  "data_sources": {
+    "crsp": "CRSP daily stock file via WRDS",
+    "datastream": "Refinitiv Datastream (US-only extension)",
+    "sp500_index": "WRDS S&P 500 daily index"
+  },
+  "app_build_timestamp": "2026-04-28T15:25:44.548479+00:00Z"
+}
