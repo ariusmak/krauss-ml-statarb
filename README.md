@@ -239,7 +239,7 @@ The Streamlit app is a precomputed research demo. It summarizes:
 Run after building app data:
 
 ```bash
-streamlit run app/streamlit_app.py
+streamlit run app/Overview.py
 ```
 
 The app reads precomputed artifacts. It does not rerun models or backtests at page-render time.

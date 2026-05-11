@@ -51,7 +51,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 PROCESSED = ROOT / "data" / "processed"
 RAW = ROOT / "data" / "raw"
 STAGING = ROOT / "data" / "_staging"
