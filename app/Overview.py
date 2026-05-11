@@ -27,7 +27,7 @@ from lib.data import data_build_is_complete, missing_build_warning  # noqa: E402
 if not data_build_is_complete():
     missing_build_warning()
 
-st.title("Krauss ML stat-arb — research demo")
+st.title("Overview")
 st.caption(
     "A reproduction and extension of Krauss, Do & Huck (2017). "
     "This app summarises findings across the main, vix-regime-analysis and "
@@ -38,18 +38,18 @@ st.markdown(
     """
 Use the **sidebar** to navigate through the pages.
 
-The deck is structured in eight sections; the appendix at the bottom (pages 9-12) holds deep-dive material referenced from the main flow.
+The deck is structured in nine sections; the appendix at the bottom (pages 9-12) holds deep-dive material referenced from the main flow.
 
 **Main flow**
 
 0. **Background** — plain-English primer on statistical arbitrage, Sharpe, k = 10, P̂ / Û, alpha decay. **Start here** if any of those terms are unfamiliar.
 1. **Paper overview** — what Krauss et al. (2017) did, in two paragraphs.
-2. **Reproduction** — our re-runs vs the paper's published numbers (94 % parity).
+2. **Reproduction** — how closely our re-runs match the paper's published numbers.
 3. **Methodology** — what we changed: dual P̂ / Û output and five new scoring schemes.
 4. **Results** — equity curve 1992-2025 with SPY overlay, plus headline KPIs and findings.
 5. **Regime attempts** — three regime frameworks, all null. Why the alpha decay isn't a vol-regime artefact.
 6. **Cost-aware execution** — turnover vs Sharpe, plus the 16-row no-trade-band matrix.
-7. **Simulator** — pick a date window and parameters; replays historical daily returns into equity-curve and risk metrics. *(Forthcoming.)*
+7. **Simulator** — pick a date window and parameters; replays historical daily returns into equity-curve and risk metrics.
 8. **Conclusion** — what worked, what didn't, what to build next.
 
 **Appendix**
