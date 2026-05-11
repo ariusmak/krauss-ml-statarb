@@ -26,6 +26,15 @@
 
 ### Open Deviations (retraining pending or inherent to library choice)
 
+**18. H2O silent input standardization (2026-05-11).** H2O's
+`H2ODeepLearningEstimator` defaults to `standardize=True`, which z-scores
+features per-column before training. The paper text (Section 4.2,
+Equation 1) does not disclose this. Our PyTorch port trains on raw
+simple returns, matching the paper's prose but not its silent H2O
+behavior. Likely contributes to the Phase-1 DNN under-reproduction in
+Pipeline B (63% of paper vs Pipeline A's 85%). Verified against H2O
+Python API docs and h2o-py source.
+
 ---
 
 ## 1. Data-Source Deviations
@@ -475,3 +484,35 @@ The CRSP pipeline is systematically lower due to: (1) 614 extra "ever-member" st
 | XGB min split improvement | Not specified in paper | Set `gamma=1e-5` (H2O `min_split_improvement=1e-5`; XGBoost default=0) | Minor effect on tree structure. Fix applied 2026-04-07. |
 | DNN L1 scope | Not specified in paper | L1 now applied to weights only, not biases (matching H2O behavior) | H2O applies L1 to weight matrices only. Over-regularizing biases reduced expressiveness. Fix applied 2026-04-07. |
 | ENS3 rank formula | Paper Eq. 7: `(1/R_i) / sum(1/R_j)` with rank 1 = best | Corrected from `R_i / sum(R_j)` to paper formula | Old code gave weights 50/33/17 to best/mid/worst; correct is 54.5/27.3/18.2. Fix applied 2026-04-07. |
+
+---
+
+## 17. Null Test — P-gate(0.05) Extension Sharpe
+
+ENS1 P-gate(0.05) earns post-cost Sharpe +0.94 on its 792 trading days
+in the 2015-2025 extension. To distinguish signal from selection, we
+ran a null test: 10,000 random 792-day subsamples of ENS1 P-only
+extension returns.
+
+| Statistic | Value |
+|---|---|
+| Observed gate Sharpe | 0.9348 |
+| Null distribution mean | −0.4055 |
+| Null distribution median | −0.3951 |
+| 95th percentile of null | 0.3735 |
+| 99th percentile of null | 0.6562 |
+| **Percentile of observed gate Sharpe** | **99.83rd** |
+
+Only 17 of 10,000 random subsamples produced a higher Sharpe.
+
+**Interpretation:** strong evidence of signal. The gate identifies days
+on which the model's prediction is informative, not a lucky 792-day
+slice.
+
+**Caveat:** this null tests day-selection, not stock-selection. It rules
+out "the +0.94 is a sampling fluke" but is consistent with either
+(i) a rare strong edge that the gate isolates, or (ii) a small
+persistent edge that the gate scales by trading less often. Both are
+favorable readings.
+
+Code: `notebooks/null_test_pgate.ipynb`. Seed 42, 10,000 trials.
