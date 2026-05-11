@@ -48,9 +48,11 @@ st.header("What worked")
 st.markdown(
     """
 1. **The paper reproduces.** Our 1992-2015 ENS1 baseline earns a post-cost
-   Sharpe of **2.18** against the paper's reported 2.12 — a difference of
-   0.06, comfortably inside run-to-run noise for this kind of long-history
-   backtest. We reproduce the sign of every headline result on that era:
+   Sharpe of **2.18** against the paper's reported **1.81** — a difference
+   of 0.37, mainly because our walk-forward turnover (~2.5 half-turns/day)
+   is lower than the paper's implied ~4.0, so the same 5 bps/half-turn
+   convention bites less hard on our runs. We reproduce the sign of every
+   headline result on that era:
    P-only beats U-only, product composite destroys value, the top-k portfolio
    concentrates its Sharpe at k = 10.
 """
@@ -78,19 +80,23 @@ st.dataframe(
 
 st.markdown(
     """
-2. **The z-score composite beats the baseline in the training era.** Ranking
+2. **The z-score composite lifts daily return in the training era.** Ranking
    by `0.5·z(P̂) + 0.5·z(Û)` — the equally-weighted average of cross-sectional
    z-scores of the direction and magnitude predictions — lifts daily return
-   from 0.28 % to 0.31 %. Not a huge lift, but it's consistent across
-   sub-periods and survives the cost charge. That's the strongest
-   unconditional improvement we found to the paper's ranking rule.
+   from 0.28 % to 0.31 %. Sharpe is slightly lower (1.97 vs P-only's 2.18)
+   because Z-comp runs at higher vol; the daily-return lift is consistent
+   across sub-periods and survives the cost charge. That's the strongest
+   unconditional improvement to the paper's ranking rule on daily return,
+   though not on risk-adjusted return.
 
-3. **The no-trade band preserves alpha at much lower turnover.** A 10 bps
-   band (skip trades smaller than 10 bps of NAV) preserves most of the
-   Sharpe for XGB and RF while cutting turnover by 40-60 %. XGB actually
-   *improves* under the band because its daily rank flips are churn more
-   than signal; see the cost-analysis page for the full 16-row matrix and
-   the explanation of why XGB is the only model that benefits.
+3. **The no-trade band helps XGB, hurts DNN and ENS1.** A 10 bps band
+   (skip trades smaller than 10 bps of NAV) gives positive Sharpe deltas
+   in every XGB cell (the only model where this is true), small mixed
+   effects on RF (3 of 4 cells slightly negative, one marginally positive),
+   and negative deltas across the board for DNN and ENS1. XGB *improves*
+   under the band because its daily rank flips are churn more than signal;
+   see the cost-analysis page for the full 16-row matrix and the
+   explanation of why XGB is the only model that benefits.
 
 4. **The directional-disagreement analysis explains the product
    composite's failure.** Multiplying `(2P̂ − 1)` by `Û` only works when the
@@ -117,21 +123,30 @@ st.markdown(
    different routes. Whatever is dragging on the strategy post-2015 is
    **not concentrated in a particular vol regime** — it's regime-universal.
 
-2. **Post-2015 alpha has collapsed across every scheme.** On our 2015-2025
-   Datastream extension, every (model × scheme) combination we ran lands
-   at a negative post-cost Sharpe. That holds for the paper's baseline
-   P-only, the z-score composite, and both P-gate variants. The
-   directional-disagreement rate drops from ~49 % to ~27 % across the
-   break, but that isn't good news: it's because Û has compressed in
-   magnitude by a factor of 4-5×, so its sign is pinned to the sign of
-   P̂ − 0.5 by numerical noise. The signal in Û has decayed away.
+2. **Post-2015 baseline alpha has collapsed.** On our 2015-2025 extension,
+   ENS1's four non-gated schemes all land at negative post-cost
+   Sharpe: P-only at −0.39, U-only at −0.66, Z-comp at −0.69, and Product
+   at −1.41. The signal in the *baseline ranking rule* has decayed across
+   every magnitude-aware variant. The directional-disagreement rate drops
+   from ~49 % to ~27 % across the break, but that isn't good news. Û has
+   compressed by ~1.5× (the top-10/bottom-10 spread of |Û| drops from
+   0.63 % to 0.43 %) and its sign has become more aligned with
+   P̂ − 0.5. The magnitude head has lost most of its independent
+   information.
 
-3. **No scheme survives the combination of cost drag and decay.** The
-   post-cost CRSP Sharpe of 2.18 would have been tradeable; the
-   post-cost extension Sharpe of around −0.4 would not. The gap between
-   those two numbers is the story: a model that worked on the sample it
-   was trained on — and on a decade of post-training holdout — but
-   stopped working when the next decade arrived.
+3. **Only the gated schemes retain post-cost signal in the extension.**
+   ENS1 P-gate(0.05) earns +0.94 Sharpe on the 32 % of days it trades
+   — a result that lands at the 99.8th percentile of a null distribution
+   built from 10,000 random 792-day subsamples of P-only's extension
+   returns (`notebooks/null_test_pgate.ipynb`, documented in
+   `docs/reproduction_deviations.md` §17). The gate is identifying days
+   the model is informative on, not picking a lucky subsample.
+   P-gate(0.03), which trades more often (91 % of days), earns a smaller
+   +0.39 Sharpe. Two caveats remain: (a) the gate trades 68 % less often
+   than the baseline, so the same edge is expressed over a much shorter
+   window; (b) the null test rules out sampling-fluke explanations but
+   doesn't distinguish "rare strong edge isolated by the gate" from
+   "small persistent edge scaled by trading less often."
 """
 )
 
@@ -195,11 +210,12 @@ st.markdown(
 
 st.divider()
 st.info(
-    "**Bottom line.** The paper's result reproduces cleanly, the "
-    "magnitude-aware extensions add a modest but honest lift in the "
-    "training era, and the 2015-2025 out-of-sample collapse is the "
-    "result worth taking most seriously — it's the signal that "
-    "whatever edge was there has largely gone. The next build should "
-    "either bring new features to the problem or be honest about the "
-    "decay and move on."
+    "**Bottom line.** The paper's headline ranking rule reproduces "
+    "cleanly, the magnitude-aware extensions add a modest but honest "
+    "lift in the training era on daily return (though not Sharpe), and "
+    "the 2015-2025 baseline collapse is the result worth taking most "
+    "seriously. The gated schemes retain extension-era signal but only "
+    "on a small subset of days; our follow-up work should focus on "
+    "understanding *why* the gates work — whether they isolate a real "
+    "residual edge or scale a tiny persistent one."
 )

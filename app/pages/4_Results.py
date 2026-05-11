@@ -105,11 +105,20 @@ _kpi(k2, "Era 1 best non-gated — Z-comp on ENS1",
       "0.5·z(P̂) + 0.5·z(Û). The cleanest win that doesn't lean on day-"
       "selection.",
       color="#1f77b4")
-_kpi(k3, f"Era 2 least-bad — {era2_best_scheme} on ENS1",
+era2_best_days = int(best_row["trading_days"]) if not era2_pool.empty else None
+if era2_best_days:
+    days_text = (
+        "Trades 792 of 2,500 extension days (32%). A null test "
+        "(10,000 random 792-day subsamples of P-only) places this "
+        "Sharpe at the 99.8th percentile; signal, not lucky "
+        "subsample selection."
+    )
+else:
+    days_text = "Post-cost on the 2015-2025 extension."
+_kpi(k3, f"Era 2 best — {era2_best_scheme} on ENS1",
       f"Sharpe {era2_best:0.2f}" if era2_best is not None else "n/a",
-      "Post-cost on the 2015-2025 Datastream extension. Negative — the "
-      "best scheme available is still a losing strategy.",
-      color="#c62828")
+      days_text,
+      color="#142B4F")
 _kpi(k4, "Era 2 baseline — P-only on ENS1",
       f"Sharpe {era2_baseline:0.2f}" if era2_baseline is not None else "n/a",
       "Post-cost. The paper's headline scheme on the out-of-sample window "
@@ -124,7 +133,7 @@ ens1 = equity.query("model == 'ENS1' and scheme == 'P-only'").copy()
 ens1 = ens1.sort_values(["cost_regime", "date"])
 ens1["ret"] = ens1["ret"].fillna(0.0)
 ens1["stitched_cum"] = ens1.groupby("cost_regime", observed=True)["ret"].transform(
-    lambda s: (1.0 + s).cumprod() - 1.0
+    lambda s: (1.0 + s).cumprod()
 )
 
 fig = go.Figure()
@@ -139,20 +148,20 @@ for cr, grp in ens1.groupby("cost_regime", observed=True):
         mode="lines",
         name=ens1_labels[cr],
         line=dict(color=ens1_colors[cr], width=2),
-        hovertemplate="%{x|%Y-%m-%d}<br>cum ret = %{y:.2f}<extra></extra>",
+        hovertemplate="%{x|%Y-%m-%d}<br>growth = %{y:.2f}x<extra></extra>",
     ))
 
 if spy is not None and not spy.empty:
     start = ens1["date"].min()
     spy_in = spy[spy["date"] >= start].copy()
     spy_in["ret"] = spy_in["ret"].fillna(0.0)
-    spy_in["cum_ret"] = (1.0 + spy_in["ret"]).cumprod() - 1.0
+    spy_in["cum_ret"] = (1.0 + spy_in["ret"]).cumprod()
     fig.add_trace(go.Scatter(
         x=spy_in["date"], y=spy_in["cum_ret"],
         mode="lines",
         name="SPY total return (long market exposure — for context only)",
         line=dict(color="#999", width=1.5, dash="dot"),
-        hovertemplate="%{x|%Y-%m-%d}<br>SPY cum ret = %{y:.2f}<extra></extra>",
+        hovertemplate="%{x|%Y-%m-%d}<br>SPY growth = %{y:.2f}x<extra></extra>",
     ))
 
 fig.add_shape(
@@ -169,17 +178,22 @@ fig.add_annotation(
 fig.update_layout(
     height=500,
     xaxis_title=None,
-    yaxis_title="Cumulative return",
+    yaxis_title="Cumulative return (log scale)",
     legend=dict(orientation="h", y=-0.2),
     margin=dict(l=50, r=20, t=30, b=60),
     hovermode="x unified",
 )
+fig.update_yaxes(type="log")
 st.plotly_chart(fig, use_container_width=True)
 
 st.caption(
     "ENS1 is the equal-weighted mean of RF, XGB and DNN direction "
-    "predictions. Before costs it looks like a straight line up through the "
-    "CRSP era. After 5 bps/half-turn, post-2008 returns flatten markedly. "
+    "predictions. **Y-axis is log-scale 'growth of \\$1'** — necessary "
+    "because pre-cost cumulative returns over 33 years reach the "
+    "billions, and a linear axis hides the post-cost line entirely. "
+    "Before costs it climbs steeply across the CRSP era. After "
+    "5 bps/half-turn, growth slows from 2008 onwards and reverses across "
+    "the extension era (visible as the line declining from ~2015 onward). "
     "**SPY is plotted as context, not as a direct benchmark**: this "
     "strategy is dollar-neutral, so the honest comparator is cash plus "
     "alpha, not a 100 %-long index."
@@ -200,18 +214,31 @@ with col1:
         f"Sharpe {sharpe_ens1_postcost:0.2f}",
         delta=(f"{sharpe_ens1_postcost - sharpe_ens1_precost:+0.2f} vs pre-cost"
                 if sharpe_ens1_postcost and sharpe_ens1_precost else None),
-        delta_color="inverse",
     )
     st.caption("ENS1 P-only, 1992-2015, k=10, post-cost.")
 
+zcomp_row = summary.query(
+    "model == 'ENS1' and scheme == 'Z-comp' and era == @era1 "
+    "and cost_regime == '5bps_half_turn'"
+)
+pony_row = summary.query(
+    "model == 'ENS1' and scheme == 'P-only' and era == @era1 "
+    "and cost_regime == '5bps_half_turn'"
+)
+daily_zcomp = float(zcomp_row['daily_return'].iloc[0]) if not zcomp_row.empty else None
+daily_pony = float(pony_row['daily_return'].iloc[0]) if not pony_row.empty else None
 with col2:
     st.metric(
-        "Z-score composite beats the baseline",
-        f"Sharpe {era1_zcomp:0.2f}" if era1_zcomp else "n/a",
-        delta=(f"{era1_zcomp - sharpe_ens1_postcost:+0.2f} vs P-only"
-                if era1_zcomp and sharpe_ens1_postcost else None),
+        "Z-score composite lifts daily return",
+        f"{daily_zcomp*100:.2f}%" if daily_zcomp is not None else "n/a",
+        delta=(f"{(daily_zcomp - daily_pony)*100:+.2f}pp vs P-only"
+                if daily_zcomp is not None and daily_pony is not None else None),
     )
-    st.caption("Z-comp averages cross-sectional z-scores of P̂ and Û.")
+    st.caption(
+        "Z-comp averages cross-sectional z-scores of P̂ and Û. "
+        "Daily return is higher than P-only's; Sharpe is slightly "
+        "lower (1.97 vs 2.18) because Z-comp runs at higher vol."
+    )
 
 with col3:
     st.metric(
@@ -219,7 +246,6 @@ with col3:
         f"Sharpe {sharpe_prod_postcost:0.2f}" if sharpe_prod_postcost is not None else "n/a",
         delta=(f"{sharpe_prod_postcost - sharpe_ens1_postcost:+0.2f} vs P-only"
                 if sharpe_prod_postcost is not None and sharpe_ens1_postcost else None),
-        delta_color="inverse",
     )
     st.caption("Disagreement on sign + multiplication = sign-flips.")
 
@@ -227,6 +253,7 @@ st.divider()
 st.markdown(
     "→ Filter every (era, scheme, model, cost regime) we ran on the "
     "**[Results matrix](Results_matrix)** appendix page. "
-    "Why the post-2015 numbers are negative is unpacked on "
+    "Why the baseline P-only scheme collapsed post-2015 — and why the "
+    "gated variants extract residual signal — is unpacked on "
     "**[Regimes](Regimes)** and **[Conclusion](Conclusion)**."
 )

@@ -46,8 +46,9 @@ Every trading day we rank a few hundred stocks by a model's score. We
 borrowed-and-sold position that profits when the stock falls.
 
 If the model is right on average, the longs go up a bit more than the
-shorts, and the gap between them is our daily profit — regardless of
-whether the whole market went up or down that day. That "regardless of
+shorts, and the gap between them is our daily profit — largely
+independent of broad market direction (the strategy still carries some
+residual market beta, but much less than a long-only book). That "regardless of
 the market" property is the point of statistical arbitrage: we try to
 harvest a tiny but *consistent* edge in relative performance, not a
 directional bet on the S&P 500.
@@ -58,7 +59,7 @@ directional bet on the S&P 500.
 card(
     "2 — What does 'dollar-neutral long-short' mean?",
     """
-For every **$1 we invest long** we put **$1 short**. Net market exposure
+For every \$1 we invest long we put \$1 short. Net dollar exposure
 is zero, so a rally or a crash in the overall index leaves the book
 essentially unchanged; only the spread between our longs and shorts
 moves the P&L.
@@ -88,7 +89,9 @@ card(
     "3 — What is a Sharpe ratio?",
     """
 Sharpe divides the **average return** by the **standard deviation of
-return**. Higher = more return per unit of risk. A rough intuition
+return** (strictly: excess return over the risk-free rate, which we
+ignore throughout this app — approximately fine in low-rate environments).
+Higher = more return per unit of risk. A rough intuition
 scale, annualised:
 
 | Sharpe | What it means |
@@ -115,7 +118,7 @@ predicted losers. Smaller `k` concentrates the portfolio into the
 highest-conviction names; larger `k` diversifies but dilutes the
 signal. The paper reports k = 10 because that's the Sharpe-maximising
 choice across the models they tested — we reproduce the same grid on
-our data (see page 7, "What didn't work").
+our data (see the Regimes page).
     """,
 )
 
@@ -170,11 +173,10 @@ spot the same signal and compete it away, or (iii) the training data
 was a favourable sample.
 
 In this project, pre-2015 the strategy earned a big post-cost Sharpe
-(1.5–2.6 depending on scheme). Post-2015 the same models on the same
-universe have produced **negative** post-cost Sharpe. That's alpha
-decay: same recipe, same ingredients, the dish stopped tasting good.
-The app's 2015-2025 extension is designed to make that collapse
-visible rather than hide it.
+(1.5–2.6 depending on scheme). Post-2015 the **baseline** strategy has
+produced negative post-cost Sharpe. That's alpha decay. The app's
+2015-2025 extension is designed to make that collapse visible rather
+than hide it.
     """,
 )
 

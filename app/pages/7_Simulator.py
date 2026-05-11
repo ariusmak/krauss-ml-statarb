@@ -80,11 +80,12 @@ with st.container(border=True):
         value=10_000.0, step=1_000.0, format="%.2f",
     )
 
-    SCHEME_CHOICES = ["P-only", "Z-comp", "P-gate(0.03)", "P-gate(0.05)"]
+    SCHEME_CHOICES = ["P-only", "U-only", "Z-comp", "Product",
+                      "P-gate(0.03)", "P-gate(0.05)"]
     MODEL_CHOICES = ["ENS1", "RF", "XGB", "DNN"]
     COST_REGIME_LABELS = {
-        "Baseline 5 bps":     "5bps_half_turn",
-        "No-trade band 10 bps": "no_cost",
+        "Post-cost (5 bps/half-turn)": "5bps_half_turn",
+        "Pre-cost (no costs)":          "no_cost",
     }
 
     c4, c5, c6 = st.columns(3)
@@ -95,10 +96,9 @@ with st.container(border=True):
     cost_regime = COST_REGIME_LABELS[cost_label]
 
     st.caption(
-        f"`No-trade band 10 bps` displays the gross (no-cost) curve here; "
-        "the band's actual Sharpe deltas are tabulated on the "
-        "[Cost-aware execution](Cost-aware_execution) page from the live "
-        "notebook outputs."
+        "For the no-trade-band experiment, see the "
+        "[Cost-aware execution](Cost-aware_execution) page — band-effect "
+        "Sharpe deltas are tabulated there from the live notebook outputs."
     )
 
 # ---------------------------------------------------------------------------
@@ -357,9 +357,10 @@ metric(r3[2], "Best / worst day",
 r4 = st.columns(3)
 metric(r4[0], "Trading days in window", f"{len(ret):,}",
         "Calendar days with a daily return row in the parquet.")
-metric(r4[1], "Alpha vs SPY",
+metric(r4[1], "Excess return vs SPY",
         _pct(alpha_vs_spy) if not np.isnan(alpha_vs_spy) else "n/a",
-        "Strategy ann. return − SPY ann. return.")
+        "Strategy ann. return − SPY ann. return. "
+        "Not regression-adjusted alpha.")
 metric(r4[2], "Correlation with SPY",
         _num(corr_with_spy) if not np.isnan(corr_with_spy) else "n/a",
         "Pearson correlation of daily strategy and daily SPY returns.")
@@ -396,7 +397,7 @@ st.warning(
     "This page replays pre-computed daily returns from frozen model "
     "predictions trained on data through 2025-09-24. It shows what would "
     "have happened if you had deployed this strategy historically — not "
-    "what would happen if you deployed it today. The strategy's edge has "
-    "**materially decayed in the post-2015 era**; see the "
-    "[Conclusion](Conclusion) page."
+    "what would happen if you deployed it today. The strategy's "
+    "**baseline (non-gated) schemes have materially decayed in the "
+    "post-2015 era**; see the [Conclusion](Conclusion) page."
 )

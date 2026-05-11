@@ -34,7 +34,7 @@ dis = load_disagreement_panel()
 summary = load_summary_table()
 
 st.caption(
-    ":books: **Appendix** — deep-dive page. The main eight-section story is "
+    ":books: **Appendix** — deep-dive page. The main nine-section story is "
     "Background → Paper overview → Reproduction → Methodology → Results → "
     "Regimes → Cost-aware execution → Simulator → Conclusion."
 )
@@ -246,15 +246,15 @@ col_c.metric("Distance from 50% in extension",
               f"{abs(ext_avg - 0.5) * 100:.1f} pp")
 
 st.warning(
-    "**Interpretation — the post-2015 drop in disagreement is diagnostic of Û "
-    "collapse, not improved prediction.** A genuinely aligned informative U "
-    "head would lower disagreement *and* lift returns. In the extension era "
-    "we see the first without the second: post-cost ENS1 Sharpes go negative "
-    "across every scheme. The mechanical explanation is that Û has shrunk "
-    "towards zero in magnitude, so its sign is pinned almost entirely by "
-    "numerical noise around the cross-sectional median — which happens to "
-    "co-move with the sign of P̂ − 0.5. The histogram below makes this "
-    "visible."
+    "**Interpretation — the post-2015 drop in disagreement is not, on its "
+    "own, good news.** A genuinely aligned informative U head would lower "
+    "disagreement *and* lift returns. In the extension era, post-cost ENS1 "
+    "Sharpes go negative on the four non-gated schemes (P-only, U-only, "
+    "Z-comp, Product) — alignment without return is what we see. The two "
+    "gated schemes (P-gate(0.03), P-gate(0.05)) retain positive Sharpe by "
+    "trading only on days the model is confident; see the Results page for "
+    "the null-test result on P-gate(0.05). The histogram below shows the "
+    "magnitude compression that contributes to the alignment."
 )
 
 # --- Magnitude histogram: Û in era 1 vs era 2 ------------------------------
@@ -314,11 +314,10 @@ col_c.metric("Compression ratio (CRSP / ext)",
 
 st.caption(
     f"Û in the extension era has roughly {crsp_std / max(ext_std, 1e-12):0.1f}× "
-    "less standard deviation than in the CRSP era. With magnitudes that small, "
-    "the sign of Û is effectively pinned to the sign of P̂ − 0.5 by rounding "
-    "noise, which is why the disagreement rate collapses without any return "
-    "benefit — the heads aren't agreeing on a signal, there just isn't a "
-    "signal in Û any more."
+    "less standard deviation than in the CRSP era. The magnitude head has lost "
+    "most of its independent information — its sign has become more aligned "
+    "with P̂ − 0.5, which is why the disagreement rate dropped from ~49% to "
+    "~27% without any return benefit on the non-gated schemes."
 )
 
 # --- Why the product composite fails ---------------------------------------
