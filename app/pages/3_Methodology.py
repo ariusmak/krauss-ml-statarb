@@ -34,8 +34,10 @@ st.caption(
 
 st.markdown(
     """
-**What we kept identical to the paper.** Same Datastream universe with
-month-end no-lookahead constituents. Same 31 lagged-return features.
+**What we kept identical to the paper.** S&P 500 universe with
+month-end no-lookahead constituents (CRSP-sourced — see the
+[Reproduction](Reproduction) page on the two-pipeline split). Same 31
+lagged-return features.
 Same 750-train / 250-trade rolling walk-forward. Same k = 10 long-short
 construction at 5 bps / half-turn cost. Random seed 1, fixed across runs.
 

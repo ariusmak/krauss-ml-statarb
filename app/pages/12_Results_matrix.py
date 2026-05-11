@@ -36,7 +36,7 @@ st.info(
 )
 
 st.caption(
-    ":books: **Appendix** — deep-dive page. The main eight-section story is "
+    ":books: **Appendix** — deep-dive page. The main nine-section story is "
     "Background → Paper overview → Reproduction → Methodology → Results → "
     "Regimes → Cost-aware execution → Simulator → Conclusion."
 )
@@ -158,8 +158,14 @@ else:
 
 # --- Quick comparators -----------------------------------------------------
 with st.expander("Best Sharpe per era + cost regime"):
+    st.caption(
+        "Filtered to rows with at least 100 trading days — excludes "
+        "pathologically small-sample cells (e.g. DNN P-gate(0.05) CRSP "
+        "trades on only 7 days and produces a meaningless Sharpe of 10)."
+    )
     best = (
-        summary.sort_values("sharpe", ascending=False)
+        summary[summary["trading_days"] >= 100]
+        .sort_values("sharpe", ascending=False)
         .groupby(["era", "cost_regime"], as_index=False, observed=True).head(3)
         .sort_values(["era", "cost_regime", "sharpe"], ascending=[True, True, False])
         .reset_index(drop=True)
@@ -167,12 +173,13 @@ with st.expander("Best Sharpe per era + cost regime"):
     st.dataframe(
         best[[
             "era", "cost_regime", "model", "scheme", "sharpe",
-            "ann_return", "avg_turnover",
+            "ann_return", "avg_turnover", "trading_days",
         ]],
         use_container_width=True, hide_index=True,
         column_config={
             "sharpe": st.column_config.NumberColumn(format="%.2f"),
             "ann_return": st.column_config.NumberColumn(format="%.3f"),
             "avg_turnover": st.column_config.NumberColumn(format="%.3f"),
+            "trading_days": st.column_config.NumberColumn(format="%d"),
         },
     )

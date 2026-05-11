@@ -116,7 +116,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.caption(
     "The dashed red line is the Sharpe frontier — the best Sharpe achievable "
-    "at or below each turnover level. Points above the frontier are strictly "
+    "at or below each turnover level. Points on the frontier are strictly "
     "dominant on the turnover/Sharpe trade-off; points below pay more cost "
     "for less return."
 )

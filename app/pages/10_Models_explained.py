@@ -35,7 +35,7 @@ equity = load_equity_curves()
 holdings = load_daily_holdings()
 
 st.caption(
-    ":books: **Appendix** — deep-dive page. The main eight-section story is "
+    ":books: **Appendix** — deep-dive page. The main nine-section story is "
     "Background → Paper overview → Reproduction → Methodology → Results → "
     "Regimes → Cost-aware execution → Simulator → Conclusion."
 )
@@ -239,7 +239,7 @@ criterion (matching the H2O DRF reproduction) and per-tree 63.2 % bootstrap
 sampling keep the model close to the Krauss paper's tree specification.
 
 Strengths. High-capacity, stable under walk-forward retraining, tolerant of
-the standardised return features. The sqrt feature subsampling at each split
+the raw simple-return features. The sqrt feature subsampling at each split
 handles the correlation between adjacent return lags.
 
 Weaknesses. Calibration drifts. Probability outputs cluster away from 0 and
