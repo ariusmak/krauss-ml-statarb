@@ -31,7 +31,7 @@ st.info(
 )
 
 st.caption(
-    ":books: **Appendix** — deep-dive page. The main eight-section story is "
+    ":books: **Appendix** — deep-dive page. The main nine-section story is "
     "Background → Paper overview → Reproduction → Methodology → Results → "
     "Regimes → Cost-aware execution → Simulator → Conclusion."
 )
@@ -53,8 +53,8 @@ digraph pipeline {
 
     subgraph cluster_data {
         label="Data"; color="#c9d3dd"; fontname="Helvetica"; fontsize=12;
-        crsp    [label="CRSP daily file\n(1989-2015)"];
-        ds      [label="Datastream US\n(2001-2025)"];
+        crsp    [label="CRSP daily file\n(1992-2015)"];
+        ds      [label="Datastream US\n(2015-2025)"];
         sp500   [label="S&P 500 index\n(VIX proxy)"];
     }
 
@@ -107,14 +107,17 @@ st.markdown("### Stage explanations")
 with st.expander("Data sources"):
     st.markdown(
         f"""
-- **CRSP daily file** — primary panel for the paper reproduction.
+- **CRSP daily file** — data source for Pipeline B's 1992-2015 era
+  (Pipeline B's 2015-2025 extension uses Datastream; see the
+  [Reproduction](Reproduction) page for the full two-pipeline breakdown).
   Coverage {meta['eras']['crsp']['start']} to {meta['eras']['crsp']['end']}.
   Source: {meta['data_sources']['crsp']}.
-- **Datastream US** — independent vendor used for the 2015-2025 out-of-sample
-  extension. Coverage {meta['eras']['extension']['start']} to
+- **Datastream US** — data source for the 2015-2025 out-of-sample extension,
+  and for the paper-conditions reproduction (Pipeline A) on the
+  [Reproduction](Reproduction) page. Coverage {meta['eras']['extension']['start']} to
   {meta['eras']['extension']['end']}. Source: {meta['data_sources']['datastream']}.
 - **S&P 500 index** — daily close used to derive VIX-style volatility
-  regimes on page 7. Source: {meta['data_sources']['sp500_index']}.
+  regimes on the [Regimes](Regimes) page. Source: {meta['data_sources']['sp500_index']}.
         """
     )
 
@@ -134,9 +137,11 @@ are eligible — the longest feature lookback in the 31-feature set.
 with st.expander("Features and labels"):
     st.markdown(
         """
-- **Features**: 31 lagged return transforms `R1, R2, ..., R20, R40, R60,
-  R120, R180, R240` (Krauss et al. formula 1). Cross-sectionally standardised
-  per day before training.
+- **Features**: 31 lagged return transforms — `R1, R2, ..., R20` (20 short-term
+  daily lags) and `R40, R60, R80, R100, R120, R140, R160, R180, R200, R220, R240`
+  (11 longer-horizon lags in 20-day steps), per Krauss et al. equation 1.
+  Features are raw simple returns; no standardization or scaling is applied
+  before training.
 - **Label y_binary**: 1 if the stock's next-day return exceeds the
   cross-sectional median, 0 otherwise.
 - **Label u_excess**: the stock's next-day return minus the cross-sectional
@@ -174,7 +179,7 @@ rank on.
 | U-only | `U_hat` | Magnitude only |
 | Z-comp | `0.5 z(P_hat) + 0.5 z(U_hat)` | Averaged cross-sectional z-scores |
 | Product | `(2 P_hat - 1) * U_hat` | Signed magnitude |
-| P-gate(c) | keep `|P_hat - 0.5| >= c`, rank by `sign(P_hat - 0.5) * |U_hat|` | Gate out uncertain predictions |
+| P-gate(c) | longs: `P_hat > 0.5 + c`, ranked by `U_hat` desc; shorts: `P_hat < 0.5 - c`, ranked by `U_hat` asc | Gate out uncertain predictions; rank confident candidates by signed U |
         """
     )
 
