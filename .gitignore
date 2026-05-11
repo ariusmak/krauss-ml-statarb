@@ -5,8 +5,10 @@
 # Allow prediction files via LFS
 !data/processed/predictions_*.parquet
 
-# Allow pre-baked app data
+# Allow compact app-facing runtime data
 !app/data/*.parquet
+app/data/model_returns_refresh.log
+app/data/.model_returns_refresh.lock
 
 # Python
 __pycache__/

@@ -1,7 +1,6 @@
 # Streamlit Cloud runtime dependencies for the research-demo app.
 # Only lists what the running app needs — backtests and data builds are
-# precomputed offline by scripts/build_app_data.py and do not need to run
-# on the hosted instance.
+# precomputed offline and shipped as parquet/json files under app/data/.
 #
 # Pinned to a floor for reproducibility; ceilings left open so Streamlit
 # Cloud can pick up minor updates.

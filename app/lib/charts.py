@@ -1,10 +1,10 @@
 """Reusable Plotly chart builders."""
+
 from __future__ import annotations
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-
 
 SCHEME_ORDER = [
     "P-only", "U-only", "Z-comp", "Product", "P-gate(0.03)", "P-gate(0.05)"

@@ -19,6 +19,7 @@ dependencies = [
     "wrds",
     "sqlalchemy",
     "psycopg2-binary",
+    "yfinance",
 
     # ML
     "scikit-learn",

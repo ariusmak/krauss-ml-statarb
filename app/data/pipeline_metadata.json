@@ -73,7 +73,7 @@
         "other": "same schedule as Phase-1 DNN"
       },
       "target": "y_binary and u_excess",
-      "trained_on": "CRSP Phase 2 only \u2014 not trained on the Datastream extension"
+      "trained_on": "Datastream Phase 2 rolling windows, including the frozen period-33 live-tail model"
     },
     "RF cls+reg pair": {
       "type": "RandomForestClassifier + RandomForestRegressor",
